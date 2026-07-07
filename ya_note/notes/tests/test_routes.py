@@ -12,15 +12,10 @@ pytestmark = pytest.mark.django_db
     ('notes:home', 'users:login', 'users:signup')
 )
 def test_pages_availability_for_anonymous_user(client, name):
-    """Анонимному пользователю доступны главная, вход, выход и регистрация."""
+    """Анонимному пользователю доступны главная, вход и регистрация."""
     url = reverse(name)
     response = client.get(url)
-    # В Django 5.x users:logout возвращает 200, если GET-запрос не поддерживается,
-    # либо перенаправляет. Проверяем корректность ответа для всех страниц.
-    if name == 'users:logout':
-        assert response.status_code in (HTTPStatus.OK, HTTPStatus.FOUND)
-    else:
-        assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.OK
 
 
 def test_logout_availability_via_post(client):
@@ -35,7 +30,7 @@ def test_logout_availability_via_post(client):
     ('notes:list', 'notes:add', 'notes:success')
 )
 def test_pages_availability_for_auth_user(reader_client, name):
-    """Авторизованному пользователю доступны страницы списка, добавления и успеха."""
+    """Авторизованному пользователю доступны страницы списка и успеха."""
     url = reverse(name)
     response = reader_client.get(url)
     assert response.status_code == HTTPStatus.OK
@@ -66,10 +61,17 @@ def test_pages_availability_for_different_users(
 
 @pytest.mark.parametrize(
     'name',
-    ('notes:list', 'notes:add', 'notes:success', 'notes:detail', 'notes:edit', 'notes:delete')
+    (
+        'notes:list',
+        'notes:add',
+        'notes:success',
+        'notes:detail',
+        'notes:edit',
+        'notes:delete'
+    )
 )
 def test_redirect_for_anonymous_client(client, name, note):
-    """При попытке зайти на закрытые страницы анонима перенаправляет на логин."""
+    """При попытке зайти на закрытые страницы анонима редиректит."""
     login_url = reverse('users:login')
 
     if name in ('notes:detail', 'notes:edit', 'notes:delete'):

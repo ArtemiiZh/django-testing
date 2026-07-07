@@ -7,15 +7,18 @@ from pytest_django.asserts import assertRedirects, assertFormError
 from news.forms import BAD_WORDS, WARNING
 from news.models import Comment
 
-# Вешаем маркер базы данных на весь файл — теперь все тесты имеют доступ к БД
+# Вешаем маркер базы данных на весь файл
 pytestmark = pytest.mark.django_db
 
 
 # --- ТЕСТЫ СОЗДАНИЯ КОММЕНТАРИЕВ ---
 
 
-# 1. Анонимный пользователь НЕ может создать комментарий (с проверкой редиректа)
 def test_anonymous_user_cant_create_comment(client, news, form_data):
+    """
+    Анонимный пользователь НЕ может создать комментарий
+    (с проверкой редиректа).
+    """
     url = reverse("news:detail", args=(news.id,))
     response = client.post(url, data=form_data)
 
@@ -28,8 +31,8 @@ def test_anonymous_user_cant_create_comment(client, news, form_data):
     assert Comment.objects.count() == 0
 
 
-# 2. Авторизованный пользователь может успешно создать комментарий
 def test_user_can_create_comment(author_client, author, news, form_data):
+    """Авторизованный пользователь может успешно создать комментарий."""
     url = reverse("news:detail", args=(news.id,))
     response = author_client.post(url, data=form_data)
 
@@ -45,24 +48,25 @@ def test_user_can_create_comment(author_client, author, news, form_data):
     assert comment.author == author
 
 
-# 3. Пользователь не может использовать запрещенные слова
 def test_user_cant_use_bad_words(author_client, news):
+    """Пользователь не может использовать запрещенные слова."""
     url = reverse("news:detail", args=(news.id,))
     # Берем первое слово из списка стоп-слов (BAD_WORDS[0])
     bad_words_data = {"text": f"Какой-то текст, {BAD_WORDS[0]}, еще текст"}
 
     response = author_client.post(url, data=bad_words_data)
 
-    # Проверяем ошибку валидации формы через специальную функцию pytest-django
-    assertFormError(response=response, form_name="form", field="text", errors=WARNING)
+    # Проверяем ошибку валидации формы через синтаксис Django 5.x
+    form = response.context['form']
+    assertFormError(form, "text", WARNING)
     assert Comment.objects.count() == 0
 
 
 # --- ТЕСТЫ РЕДАКТИРОВАНИЯ И УДАЛЕНИЯ КОММЕНТАРИЕВ ---
 
 
-# 4. Автор может успешно удалить свой собственный комментарий
 def test_author_can_delete_comment(author_client, comment, news):
+    """Автор может успешно удалить свой собственный комментарий."""
     delete_url = reverse("news:delete", args=(comment.id,))
     news_url = reverse("news:detail", args=(news.id,))
     expected_url = news_url + "#comments"
@@ -73,8 +77,8 @@ def test_author_can_delete_comment(author_client, comment, news):
     assert Comment.objects.count() == 0
 
 
-# 5. Обычный пользователь НЕ может удалить чужой комментарий
 def test_user_cant_delete_comment_of_another_user(reader_client, comment):
+    """Обычный пользователь НЕ может удалить чужой комментарий."""
     delete_url = reverse("news:delete", args=(comment.id,))
 
     response = reader_client.delete(delete_url)
@@ -83,8 +87,8 @@ def test_user_cant_delete_comment_of_another_user(reader_client, comment):
     assert Comment.objects.count() == 1
 
 
-# 6. Автор может успешно отредактировать свой собственный комментарий
 def test_author_can_edit_comment(author_client, comment, news, form_data):
+    """Автор может успешно отредактировать свой собственный комментарий."""
     edit_url = reverse("news:edit", args=(comment.id,))
     news_url = reverse("news:detail", args=(news.id,))
     expected_url = news_url + "#comments"
@@ -96,8 +100,10 @@ def test_author_can_edit_comment(author_client, comment, news, form_data):
     assert comment.text == form_data["text"]
 
 
-# 7. Обычный пользователь НЕ может отредактировать чужой комментарий
-def test_user_cant_edit_comment_of_another_user(reader_client, comment, form_data):
+def test_user_cant_edit_comment_of_another_user(
+    reader_client, comment, form_data
+):
+    """Обычный пользователь НЕ может отредактировать чужой комментарий."""
     edit_url = reverse("news:edit", args=(comment.id,))
     old_text = comment.text
 

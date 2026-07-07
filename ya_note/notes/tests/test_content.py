@@ -32,7 +32,8 @@ def test_notes_list_for_different_users(
     )
 )
 def test_pages_contain_form(author_client, name, args):
-    """На страницах добавления и редактирования заметки автору доступна форма."""
+    """На страницах добавления и редактирования заметки
+    автору доступна форма."""
     if args:
         url = reverse(name, args=(args.slug,))
     else:

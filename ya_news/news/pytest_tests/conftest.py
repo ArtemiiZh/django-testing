@@ -78,6 +78,7 @@ def comment(news, author):
         news=news, author=author, text="Текст комментария"
     )
 
+
 @pytest.fixture
 def comment_id_for_args(comment):
     return (comment.id,)

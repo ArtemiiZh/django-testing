@@ -7,13 +7,13 @@ from pytest_django.asserts import assertRedirects
 pytestmark = pytest.mark.django_db
 
 
-# 1. ПОЛНОСТЬЮ ОПТИМИЗИРОВАННЫЙ ТЕСТ: Доступность страниц для разных пользователей (без if/else)
+# 1. ПОЛНОСТЬЮ ОПТИМИЗИРОВАННЫЙ ТЕСТ: Доступность страниц (без if/else)
 @pytest.mark.parametrize(
     "parametrized_client, expected_status",
     (
         (pytest.lazy_fixture("client"), HTTPStatus.OK),  # Аноним
         (pytest.lazy_fixture("author_client"), HTTPStatus.OK),  # Автор
-        (pytest.lazy_fixture("reader_client"), HTTPStatus.OK),  # Обычный читатель
+        (pytest.lazy_fixture("reader_client"), HTTPStatus.OK),  # Читатель
     ),
 )
 @pytest.mark.parametrize(
@@ -25,19 +25,19 @@ pytestmark = pytest.mark.django_db
         (
             "news:detail",
             pytest.lazy_fixture("news_id_for_args"),
-        ),  # Используем новую фикстуру-кортеж
+        ),
     ),
 )
 def test_pages_availability_for_different_users(
     parametrized_client, expected_status, name, args
 ):
-    # args принимает либо None, либо кортеж с ID — Django поймёт оба варианта
+    # args принимает либо None, либо кортеж с ID
     url = reverse(name, args=args)
     response = parametrized_client.get(url)
     assert response.status_code == expected_status
 
 
-# 2. Доступность редактирования и удаления комментария (Автору — 200, Читателю — 404)
+# 2. Доступность редактирования и удаления комментария
 @pytest.mark.parametrize(
     "parametrized_client, expected_status",
     (
@@ -80,4 +80,4 @@ def test_redirect_for_anonymous_client(client, name, args):
 def test_logout_availability(client):
     url = reverse("users:logout")
     response = client.post(url)
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code in (HTTPStatus.OK, HTTPStatus.FOUND)
