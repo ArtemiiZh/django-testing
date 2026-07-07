@@ -8,6 +8,27 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.parametrize(
+    'name, args',
+    (
+        ('notes:add', None),
+        ('notes:edit', pytest.lazy_fixture('note')),
+    )
+)
+def test_pages_contain_form(author_client, name, args):
+    """
+    На страницах добавления и редактирования заметки автору доступна форма.
+    """
+    if args:
+        url = reverse(name, args=(args.slug,))
+    else:
+        url = reverse(name)
+        
+    response = author_client.get(url)
+    assert 'form' in response.context
+    assert isinstance(response.context['form'], NoteForm)
+
+
+@pytest.mark.parametrize(
     'parametrized_client, note_in_list',
     (
         (pytest.lazy_fixture('author_client'), True),
@@ -22,23 +43,3 @@ def test_notes_list_for_different_users(
     response = parametrized_client.get(url)
     object_list = response.context['object_list']
     assert (note in object_list) is note_in_list
-
-
-@pytest.mark.parametrize(
-    'name, args',
-    (
-        ('notes:add', None),
-        ('notes:edit', pytest.lazy_fixture('note')),
-    )
-)
-def test_pages_contain_form(author_client, name, args):
-    """На страницах добавления и редактирования заметки
-    автору доступна форма."""
-    if args:
-        url = reverse(name, args=(args.slug,))
-    else:
-        url = reverse(name)
-
-    response = author_client.get(url)
-    assert 'form' in response.context
-    assert isinstance(response.context['form'], NoteForm)
