@@ -15,14 +15,12 @@ pytestmark = pytest.mark.django_db
     )
 )
 def test_pages_contain_form(author_client, name, args):
-    """
-    На страницах добавления и редактирования заметки автору доступна форма.
-    """
+    """На страницах добавления и редактирования заметки доступна форма."""
     if args:
         url = reverse(name, args=(args.slug,))
     else:
         url = reverse(name)
-        
+
     response = author_client.get(url)
     assert 'form' in response.context
     assert isinstance(response.context['form'], NoteForm)
