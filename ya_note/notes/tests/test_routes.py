@@ -1,84 +1,84 @@
 from http import HTTPStatus
-import pytest
+from django.contrib.auth import get_user_model
+from django.test import TestCase
 from django.urls import reverse
-from pytest_django.asserts import assertRedirects
 
-# Указываем, что всем тестам в этом файле нужен доступ к базе данных
-pytestmark = pytest.mark.django_db
+from notes.models import Note
 
-
-@pytest.mark.parametrize(
-    'name',
-    ('notes:home', 'users:login', 'users:signup')
-)
-def test_pages_availability_for_anonymous_user(client, name):
-    """Анонимному пользователю доступны главная, вход и регистрация."""
-    url = reverse(name)
-    response = client.get(url)
-    assert response.status_code == HTTPStatus.OK
+User = get_user_model()
 
 
-def test_logout_availability_via_post(client):
-    """Страница выхода доступна через POST-запрос в Django 5.x."""
-    url = reverse('users:logout')
-    response = client.post(url)
-    assert response.status_code in (HTTPStatus.OK, HTTPStatus.FOUND)
+class TestRoutes(TestCase):
 
+    @classmethod
+    def setUpTestData(cls):
+        cls.author = User.objects.create(username="Автор")
+        cls.reader = User.objects.create(username="Читатель")
+        cls.note = Note.objects.create(
+            title="Заголовок", text="Текст", author=cls.author, slug="note-slug"
+        )
 
-@pytest.mark.parametrize(
-    'name',
-    ('notes:list', 'notes:add', 'notes:success')
-)
-def test_pages_availability_for_auth_user(reader_client, name):
-    """Авторизованному пользователю доступны страницы списка и успеха."""
-    url = reverse(name)
-    response = reader_client.get(url)
-    assert response.status_code == HTTPStatus.OK
+    def test_pages_availability(self):
+        urls = (
+            ("notes:home", None),
+            ("users:login", None),
+            ("users:signup", None),
+        )
+        for name, args in urls:
+            with self.subTest(name=name):
+                url = reverse(name, args=args)
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
+    def test_logout_availability_via_post(self):
+        url = reverse("users:logout")
+        response = self.client.post(url)
+        self.assertIn(response.status_code, (HTTPStatus.OK, HTTPStatus.FOUND))
 
-@pytest.mark.parametrize(
-    'parametrized_client, expected_status',
-    (
-        (pytest.lazy_fixture('author_client'), HTTPStatus.OK),
-        (pytest.lazy_fixture('reader_client'), HTTPStatus.NOT_FOUND),
-    ),
-)
-@pytest.mark.parametrize(
-    'name',
-    ('notes:detail', 'notes:edit', 'notes:delete')
-)
-def test_pages_availability_for_different_users(
-    parametrized_client, name, note, expected_status
-):
-    """
-    Страницы отдельной заметки, редактирования и удаления доступны автору,
-    но возвращают 404 для обычного читателя.
-    """
-    url = reverse(name, args=(note.slug,))
-    response = parametrized_client.get(url)
-    assert response.status_code == expected_status
+    def test_pages_availability_for_auth_user(self):
+        urls = (
+            ("notes:list", None),
+            ("notes:add", None),
+            ("notes:success", None),
+        )
+        self.client.force_login(self.reader)
+        for name, args in urls:
+            with self.subTest(name=name):
+                url = reverse(name, args=args)
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
+    def test_availability_for_note_edit_and_delete(self):
+        users_statuses = (
+            (self.author, HTTPStatus.OK),
+            (self.reader, HTTPStatus.NOT_FOUND),
+        )
+        urls = (
+            ("notes:detail", (self.note.slug,)),
+            ("notes:edit", (self.note.slug,)),
+            ("notes:delete", (self.note.slug,)),
+        )
+        for user, status in users_statuses:
+            self.client.force_login(user)
+            for name, args in urls:
+                with self.subTest(user=user, name=name):
+                    url = reverse(name, args=args)
+                    response = self.client.get(url)
+                    self.assertEqual(response.status_code, status)
 
-@pytest.mark.parametrize(
-    'name',
-    (
-        'notes:list',
-        'notes:add',
-        'notes:success',
-        'notes:detail',
-        'notes:edit',
-        'notes:delete'
-    )
-)
-def test_redirect_for_anonymous_client(client, name, note):
-    """При попытке зайти на закрытые страницы анонима редиректит."""
-    login_url = reverse('users:login')
-
-    if name in ('notes:detail', 'notes:edit', 'notes:delete'):
-        url = reverse(name, args=(note.slug,))
-    else:
-        url = reverse(name)
-
-    expected_url = f'{login_url}?next={url}'
-    response = client.get(url)
-    assertRedirects(response, expected_url)
+    def test_redirect_for_anonymous_client(self):
+        login_url = reverse("users:login")
+        urls = (
+            ("notes:list", None),
+            ("notes:add", None),
+            ("notes:success", None),
+            ("notes:detail", (self.note.slug,)),
+            ("notes:edit", (self.note.slug,)),
+            ("notes:delete", (self.note.slug,)),
+        )
+        for name, args in urls:
+            with self.subTest(name=name):
+                url = reverse(name, args=args)
+                redirect_url = f"{login_url}?next={url}"
+                response = self.client.get(url)
+                self.assertRedirects(response, redirect_url)
