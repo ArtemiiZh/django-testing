@@ -13,9 +13,7 @@ COMMENT_FORM_DATA = {"text": "Новый текст комментария"}
 
 
 def test_anonymous_user_cant_create_comment(client, detail_url, login_url):
-    """
-    Аноним не может создать комментарий (замер динамического количества).
-    """
+    """Аноним не может создать комментарий."""
     comments_count_before = Comment.objects.count()
     response = client.post(detail_url, data=COMMENT_FORM_DATA)
 
@@ -47,13 +45,11 @@ def test_user_cant_use_bad_words(author_client, detail_url):
     response = author_client.post(detail_url, data=bad_words_data)
 
     assert Comment.objects.count() == comments_count_before
-    form = response.context['form']
+    form = response.context["form"]
     assertFormError(form, "text", WARNING)
 
 
-def test_author_can_delete_comment(
-    author_client, comment, detail_url, delete_url
-):
+def test_author_can_delete_comment(author_client, comment, detail_url, delete_url):
     """Автор может успешно удалить свой собственный комментарий."""
     comments_count_before = Comment.objects.count()
     expected_url = detail_url + "#comments"
@@ -64,9 +60,7 @@ def test_author_can_delete_comment(
     assert Comment.objects.count() == comments_count_before - 1
 
 
-def test_user_cant_delete_comment_of_another_user(
-    reader_client, comment, delete_url
-):
+def test_user_cant_delete_comment_of_another_user(reader_client, comment, delete_url):
     """Обычный пользователь НЕ может удалить чужой комментарий."""
     comments_count_before = Comment.objects.count()
 
@@ -76,9 +70,7 @@ def test_user_cant_delete_comment_of_another_user(
     assert Comment.objects.count() == comments_count_before
 
 
-def test_author_can_edit_comment(
-    author_client, comment, news, detail_url, edit_url
-):
+def test_author_can_edit_comment(author_client, comment, news, detail_url, edit_url):
     """Извлекаем объект через get(), сверяем неизменность автора и новости."""
     expected_url = detail_url + "#comments"
 
@@ -92,9 +84,7 @@ def test_author_can_edit_comment(
     assert updated_comment.author == comment.author
 
 
-def test_user_cant_edit_comment_of_another_user(
-    reader_client, comment, edit_url
-):
+def test_user_cant_edit_comment_of_another_user(reader_client, comment, edit_url):
     """Другой пользователь получает 404, поля сущности остаются прежними."""
     response = reader_client.post(edit_url, data=COMMENT_FORM_DATA)
 

@@ -100,7 +100,7 @@ class TestNoteEditDelete(TestCase):
         self.assertRedirects(response, reverse("notes:success"))
         self.assertEqual(Note.objects.count(), notes_count_before - 1)
 
-    def test_user_cant_delete_note_of_another_user(self):
+    def test_user_cant_delete_foreign_note(self):
         url = reverse("notes:delete", args=(self.note.slug,))
         notes_count_before = Note.objects.count()
         response = self.reader_client.delete(url)
