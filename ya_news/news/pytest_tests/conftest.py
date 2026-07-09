@@ -56,7 +56,9 @@ def bulk_news(db):
 
 @pytest.fixture
 def comment(news, author):
-    return Comment.objects.create(news=news, author=author, text="Текст комментария")
+    return Comment.objects.create(
+        news=news, author=author, text="Текст комментария"
+    )
 
 
 @pytest.fixture
