@@ -39,7 +39,7 @@ def test_comments_order(client, news, bulk_comments, detail_url):
         pytest.lazy_fixture("detail_url"),
         pytest.lazy_fixture("edit_url"),
     ),
-)
+) 
 def test_pages_contain_form(author_client, url_fixture):
     """Наличие CommentForm на страницах деталей и редактирования."""
     response = author_client.get(url_fixture)

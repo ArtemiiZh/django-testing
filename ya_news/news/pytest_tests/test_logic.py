@@ -1,14 +1,13 @@
 from http import HTTPStatus
 
+from pytest_django.asserts import assertFormError, assertRedirects
 import pytest
-from pytest_django.asserts import assertRedirects, assertFormError
 
 from news.forms import BAD_WORDS, WARNING
 from news.models import Comment
 
 pytestmark = pytest.mark.django_db
 
-# Выносим статичные данные формы в константу модуля (Требование ревьюера)
 COMMENT_FORM_DATA = {"text": "Новый текст комментария"}
 
 
@@ -24,14 +23,16 @@ def test_anonymous_user_cant_create_comment(client, detail_url, login_url):
 
 def test_user_can_create_comment(author_client, author, news, detail_url):
     """Авторизованный пользователь успешно создает комментарий."""
-    comments_count_before = Comment.objects.count()
+    # Очищаем таблицу перед тестом для гарантии независимости от Meta-сортировки
+    Comment.objects.all().delete()
+
     response = author_client.post(detail_url, data=COMMENT_FORM_DATA)
 
     expected_url = f"{detail_url}#comments"
     assertRedirects(response, expected_url)
 
-    assert Comment.objects.count() == comments_count_before + 1
-    comment = Comment.objects.last()
+    assert Comment.objects.count() == 1
+    comment = Comment.objects.get()
     assert comment.text == COMMENT_FORM_DATA["text"]
     assert comment.news == news
     assert comment.author == author

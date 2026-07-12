@@ -1,62 +1,55 @@
 from http import HTTPStatus
 
-import pytest
 from pytest_django.asserts import assertRedirects
+from pytest_lazyfixture import lazy_fixture as lf
+import pytest
 
-# Вешаем маркер базы данных на весь файл
 pytestmark = pytest.mark.django_db
 
+# Локальные лаконичные константы
+OK = HTTPStatus.OK
+NOT_FOUND = HTTPStatus.NOT_FOUND
 
-# 1. ПОЛНОСТЬЮ ОПТИМИЗИРОВАННЫЙ ТЕСТ: Доступность страниц (без if/else)
+
 @pytest.mark.parametrize(
     "url_fixture, parametrized_client, expected_status",
     (
-        (pytest.lazy_fixture("home_url"),
-         pytest.lazy_fixture("client"), HTTPStatus.OK),
-        (pytest.lazy_fixture("login_url"),
-         pytest.lazy_fixture("client"), HTTPStatus.OK),
-        (pytest.lazy_fixture("signup_url"),
-         pytest.lazy_fixture("client"), HTTPStatus.OK),
-        (pytest.lazy_fixture("detail_url"),
-         pytest.lazy_fixture("client"), HTTPStatus.OK),
-        (pytest.lazy_fixture("edit_url"),
-         pytest.lazy_fixture("author_client"), HTTPStatus.OK),
-        (pytest.lazy_fixture("edit_url"),
-         pytest.lazy_fixture("reader_client"), HTTPStatus.NOT_FOUND),
-        (pytest.lazy_fixture("delete_url"),
-         pytest.lazy_fixture("author_client"), HTTPStatus.OK),
-        (pytest.lazy_fixture("delete_url"),
-         pytest.lazy_fixture("reader_client"), HTTPStatus.NOT_FOUND),
+        (lf("home_url"), lf("client"), OK),
+        (lf("login_url"), lf("client"), OK),
+        (lf("signup_url"), lf("client"), OK),
+        (lf("detail_url"), lf("client"), OK),
+        (lf("edit_url"), lf("author_client"), OK),
+        (lf("edit_url"), lf("reader_client"), NOT_FOUND),
+        (lf("delete_url"), lf("author_client"), OK),
+        (lf("delete_url"), lf("reader_client"), NOT_FOUND),
     ),
 )
 def test_pages_availability_via_get(
     url_fixture, parametrized_client, expected_status
 ):
-    """Объединенный тест статус-кодов GET-запросов для всех роутов."""
+    """Объединенный тест статус-кодов GET-запросов для всех роутов.""" 
     response = parametrized_client.get(url_fixture)
     assert response.status_code == expected_status
 
 
 @pytest.mark.parametrize(
-    "url_fixture, parametrized_client",
+    "url_fixture, parametrized_client, expected_status",
     (
-        (
-            pytest.lazy_fixture("logout_url"),
-            pytest.lazy_fixture("client"),
-        ),
+        # Исправлено: Django возвращает статус 200 на POST-запрос разлогирования
+        (lf("logout_url"), lf("client"), OK),
     ),
 )
-def test_pages_availability_via_post(url_fixture, parametrized_client):
-    """Объединенный тест статус-кодов POST-запросов (например, logout)."""
+def test_pages_availability_via_post(url_fixture, parametrized_client, expected_status):
+    """Объединенный тест статус-кодов POST-запросов с точным ожиданием."""
     response = parametrized_client.post(url_fixture)
-    assert response.status_code in (HTTPStatus.OK, HTTPStatus.FOUND)
+    assert response.status_code == expected_status
 
 
 @pytest.mark.parametrize(
     "url_fixture",
     (
-        pytest.lazy_fixture("edit_url"),
-        pytest.lazy_fixture("delete_url"),
+        lf("edit_url"),
+        lf("delete_url"),
     ),
 )
 def test_redirect_for_anonymous_client(client, url_fixture, login_url):

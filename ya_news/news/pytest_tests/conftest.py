@@ -15,7 +15,7 @@ def author(django_user_model):
     return django_user_model.objects.create_user(username="Автор")
 
 
-@pytest.fixture
+@pytest.fixture 
 def reader(django_user_model):
     return django_user_model.objects.create_user(username="Не автор")
 
@@ -72,7 +72,7 @@ def bulk_comments(news, author):
         comment_obj.save()
 
 
-# Группа 3: Централизованные фикстуры-маршруты URL (Требование ревьюера)
+# Группа 3: Централизованные фикстуры-маршруты URL
 @pytest.fixture
 def home_url():
     return reverse("news:home")
