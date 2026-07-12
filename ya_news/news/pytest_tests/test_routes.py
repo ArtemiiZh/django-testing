@@ -1,6 +1,5 @@
 from http import HTTPStatus
 
-from django.test import Client
 from pytest_django.asserts import assertRedirects
 from pytest_lazyfixture import lazy_fixture as lf
 import pytest
@@ -57,7 +56,7 @@ def test_pages_availability_via_post(
     ),
 )
 def test_redirect_for_anonymous_client(client, url_fixture, login_url):
-    """Проверка перенаправления анониных пользователей."""
+    """Проверка перенаправления анонимных пользователей."""
     expected_redirect = f"{login_url}?next={url_fixture}"
     response = client.get(url_fixture)
     assertRedirects(response, expected_redirect)
