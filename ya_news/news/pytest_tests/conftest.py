@@ -15,7 +15,7 @@ def author(django_user_model):
     return django_user_model.objects.create_user(username="Автор")
 
 
-@pytest.fixture 
+@pytest.fixture
 def reader(django_user_model):
     return django_user_model.objects.create_user(username="Не автор")
 
@@ -46,7 +46,7 @@ def bulk_news(db):
     all_news = [
         News(
             title=f"Новость {index}",
-            text="Просто текст.",
+            text="Просто text.",
             date=today - timedelta(days=index),
         )
         for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)

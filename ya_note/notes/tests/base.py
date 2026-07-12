@@ -40,7 +40,8 @@ class BaseTestCase(TestCase):
         cls.edit_url = reverse("notes:edit", args=(cls.note.slug,))
         cls.delete_url = reverse("notes:delete", args=(cls.note.slug,))
 
-        # Выносим данные формы на уровень базы, чтобы видели все дочерние классы
+        # Выносим данные формы на уровень базы,
+        # чтобы видели все дочерние классы
         cls.form_data = {
             "title": "Новый заголовок",
             "text": "Новый текст",

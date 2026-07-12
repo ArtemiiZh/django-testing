@@ -23,7 +23,8 @@ def test_anonymous_user_cant_create_comment(client, detail_url, login_url):
 
 def test_user_can_create_comment(author_client, author, news, detail_url):
     """Авторизованный пользователь успешно создает комментарий."""
-    # Очищаем таблицу перед тестом для гарантии независимости от Meta-сортировки
+    # Очищаем таблицу перед тестом для гарантии
+    # независимости от Meta-сортировки
     Comment.objects.all().delete()
 
     response = author_client.post(detail_url, data=COMMENT_FORM_DATA)

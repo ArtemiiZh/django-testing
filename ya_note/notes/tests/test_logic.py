@@ -9,7 +9,6 @@ from notes.tests.base import BaseTestCase
 
 class TestLogic(BaseTestCase):
 
-
     def test_anonymous_user_cant_create_note(self):
         notes_count_before = Note.objects.count()
         response = self.client.post(self.add_url, data=self.form_data)
@@ -46,7 +45,9 @@ class TestLogic(BaseTestCase):
             "text": "Новый текст",
         }
         Note.objects.all().delete()
-        response = self.author_client.post(self.add_url, data=data_without_slug)
+        response = self.author_client.post(
+            self.add_url, data=data_without_slug
+        )
         self.assertRedirects(response, self.success_url)
         self.assertEqual(Note.objects.count(), 1)
 
